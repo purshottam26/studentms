@@ -28,12 +28,18 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
     $query = "INSERT INTO student (student_id, name, email, course, aadhaar, mobile, pincode, photo)
               VALUES ('$student_id','$name','$email','$course','$aadhaar','$mobile','$pincode','$photo')";
 
+    // ✅ UPDATED PART
     if(mysqli_query($conn, $query)){
+        // Student ka default password unka Student ID hoga
+        $default_pass = password_hash($student_id, PASSWORD_DEFAULT);
+        mysqli_query($conn, "UPDATE student SET password='$default_pass' WHERE student_id='$student_id'");
+        
         header("Location: students.php?msg=added");
         exit();
     } else {
         echo "Error: " . mysqli_error($conn);
     }
+
 } else {
     header("Location: students.php");
     exit();

@@ -34,6 +34,13 @@ $total_pages = ceil($total_records / $limit);
 
 $result = mysqli_query($conn, "SELECT * FROM student $where ORDER BY id DESC LIMIT $start, $limit");
 
+/* All students for live search */
+$all_q = mysqli_query($conn, "SELECT id, student_id, name, email, course, mobile, photo FROM student ORDER BY name");
+$all_students_json = [];
+while($row = mysqli_fetch_assoc($all_q)){
+    $all_students_json[] = $row;
+}
+
 /* Success message */
 $msg = $_GET['msg'] ?? '';
 ?>
@@ -45,6 +52,85 @@ $msg = $_GET['msg'] ?? '';
 <title>Students — Student Management</title>
 <link rel="stylesheet" href="style.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+.live-search-wrapper { position: relative; }
+.live-search-input {
+    width: 100%;
+    padding: 10px 16px 10px 38px;
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    outline: none;
+    transition: all 0.3s;
+    font-family: 'Nunito', sans-serif;
+}
+.live-search-input:focus {
+    border-color: #4f46e5;
+    box-shadow: 0 0 0 3px rgba(79,70,229,0.1);
+}
+.live-search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 15px;
+}
+.live-dropdown {
+    display: none;
+    position: absolute;
+    top: 110%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    max-height: 260px;
+    overflow-y: auto;
+    z-index: 9999;
+    box-shadow: 0 8px 30px rgba(79,70,229,0.15);
+}
+.live-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    cursor: pointer;
+    border-bottom: 1px solid #f1f5f9;
+    text-decoration: none;
+    color: #1e293b;
+    transition: background 0.15s;
+}
+.live-item:hover { background: #f8fafc; }
+.live-item img {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #4f46e5;
+    flex-shrink: 0;
+}
+.live-item .av {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: rgba(79,70,229,0.1);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+}
+.live-item .info { flex: 1; min-width: 0; }
+.live-item .info strong { font-size: 13px; display: block; color: #1e293b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.live-item .info span { font-size: 11px; color: #64748b; }
+.live-item .sid {
+    background: rgba(79,70,229,0.1);
+    color: #4f46e5;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+.no-result { padding: 16px; text-align: center; color: #64748b; font-size: 13px; }
+</style>
 </head>
 <body>
 
@@ -62,6 +148,11 @@ $msg = $_GET['msg'] ?? '';
             <a href="students.php" class="active"><span class="icon">👨‍🎓</span> Students</a>
             <a href="students_list.php"><span class="icon">📋</span> All Students</a>
             <a href="export.php"><span class="icon">📤</span> Export Excel</a>
+            <a href="add_exam.php"><span class="icon">📘</span> Exams</a>
+            <a href="add_result.php"><span class="icon">📊</span> Add Result</a>
+            <a href="view_result.php"><span class="icon">📄</span> View Result</a>
+            <a href="add_teacher.php"><span class="icon">👩‍🏫</span> Teachers</a>
+            <a href="library.php"><span class="icon">📚</span> Library</a>
         </div>
         <div class="sidebar-footer">
             <a href="logout.php"><span class="icon">🚪</span> Logout</a>
@@ -85,6 +176,10 @@ $msg = $_GET['msg'] ?? '';
         <div class="alert alert-success">✅ Student updated successfully!</div>
         <?php elseif($msg == 'deleted'): ?>
         <div class="alert alert-danger">🗑️ Student deleted.</div>
+        <?php elseif($msg == 'duplicate'): ?>
+        <div style="background:#fee2e2;border-left:4px solid #ef4444;padding:14px 18px;border-radius:10px;margin-bottom:18px;font-weight:700;color:#991b1b;">
+            ❌ Student ID <strong><?php echo htmlspecialchars($_GET['sid'] ?? ''); ?></strong> already exists! Koi aur unique ID use karo.
+        </div>
         <?php endif; ?>
 
         <!-- CHART -->
@@ -135,17 +230,21 @@ $msg = $_GET['msg'] ?? '';
             <!-- TABLE SECTION -->
             <div class="table-section">
 
-                <!-- SEARCH -->
+                <!-- LIVE SEARCH -->
                 <div class="filter-bar">
-                    <form method="GET">
-                        <input type="text" name="search" placeholder="🔍 Search by name, email, course, ID..."
-                            value="<?php echo htmlspecialchars($search); ?>" style="width:280px;">
-                        <button type="submit" class="btn btn-primary btn-sm">Search</button>
-                        <?php if($search): ?>
-                        <a href="students.php" class="btn btn-sm" style="background:var(--bg); border:2px solid var(--border); color:var(--text-dark);">✕ Clear</a>
-                        <?php endif; ?>
-                    </form>
-                    <span style="margin-left:auto; font-size:13px; color:var(--text-light); font-weight:600;">
+                    <div class="live-search-wrapper" style="flex:1;max-width:360px;">
+                        <span class="live-search-icon">🔍</span>
+                        <input type="text" id="liveSearch" class="live-search-input"
+                            placeholder="Name, ID, Course, Email likhо..."
+                            value="<?php echo htmlspecialchars($search); ?>"
+                            oninput="liveFilter(this.value)"
+                            autocomplete="off">
+                        <div class="live-dropdown" id="liveDropdown"></div>
+                    </div>
+                    <?php if($search): ?>
+                    <a href="students.php" class="btn btn-sm" style="background:var(--bg);border:2px solid var(--border);color:var(--text-dark);">✕ Clear</a>
+                    <?php endif; ?>
+                    <span style="margin-left:auto;font-size:13px;color:var(--text-light);font-weight:600;">
                         <?php echo $total_records; ?> student<?php echo $total_records != 1 ? 's' : ''; ?> found
                     </span>
                 </div>
@@ -165,13 +264,13 @@ $msg = $_GET['msg'] ?? '';
                         <th>Actions</th>
                     </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="tableBody">
                     <?php
                     $i = $start + 1;
                     while($row = mysqli_fetch_assoc($result)):
                     ?>
                     <tr>
-                        <td style="color:var(--text-light); font-size:13px;"><?php echo $i++; ?></td>
+                        <td style="color:var(--text-light);font-size:13px;"><?php echo $i++; ?></td>
                         <td>
                             <?php if(!empty($row['photo'])): ?>
                             <img src="uploads/<?php echo htmlspecialchars($row['photo']); ?>" alt="Photo">
@@ -182,11 +281,11 @@ $msg = $_GET['msg'] ?? '';
                         <td><span class="badge badge-primary"><?php echo htmlspecialchars($row['student_id']); ?></span></td>
                         <td>
                             <a href="profile.php?id=<?php echo $row['id']; ?>"
-                               style="font-weight:700; color:var(--primary); text-decoration:none;">
+                               style="font-weight:700;color:var(--primary);text-decoration:none;">
                                 <?php echo htmlspecialchars($row['name']); ?>
                             </a>
                         </td>
-                        <td style="color:var(--text-light); font-size:13px;"><?php echo htmlspecialchars($row['email']); ?></td>
+                        <td style="color:var(--text-light);font-size:13px;"><?php echo htmlspecialchars($row['email']); ?></td>
                         <td><span class="badge badge-success"><?php echo htmlspecialchars($row['course']); ?></span></td>
                         <td style="font-size:13px;"><?php echo htmlspecialchars($row['mobile']); ?></td>
                         <td>
@@ -196,14 +295,14 @@ $msg = $_GET['msg'] ?? '';
                                 <a href="documents.php?id=<?php echo $row['id']; ?>" title="Documents">📁 Docs</a>
                                 <a href="delete.php?id=<?php echo $row['id']; ?>"
                                    onclick="return confirm('Delete <?php echo htmlspecialchars($row['name']); ?>? This cannot be undone.')"
-                                   title="Delete" style="background:rgba(239,68,68,0.1); color:var(--danger);">🗑️</a>
+                                   title="Delete" style="background:rgba(239,68,68,0.1);color:var(--danger);">🗑️</a>
                             </div>
                         </td>
                     </tr>
                     <?php endwhile; ?>
                     <?php if($total_records == 0): ?>
                     <tr>
-                        <td colspan="8" style="text-align:center; padding:40px; color:var(--text-light);">
+                        <td colspan="8" style="text-align:center;padding:40px;color:var(--text-light);">
                             <?php if($search): ?>
                             🔍 No students found for "<strong><?php echo htmlspecialchars($search); ?></strong>"
                             <?php else: ?>
@@ -222,22 +321,20 @@ $msg = $_GET['msg'] ?? '';
                     <?php if($page > 1): ?>
                     <a href="?page=<?php echo $page-1; ?>&search=<?php echo urlencode($search); ?>">‹ Prev</a>
                     <?php endif; ?>
-
                     <?php for($i = 1; $i <= $total_pages; $i++): ?>
                     <a href="?page=<?php echo $i; ?>&search=<?php echo urlencode($search); ?>"
                        class="<?php echo $i == $page ? 'active' : ''; ?>">
                        <?php echo $i; ?>
                     </a>
                     <?php endfor; ?>
-
                     <?php if($page < $total_pages): ?>
                     <a href="?page=<?php echo $page+1; ?>&search=<?php echo urlencode($search); ?>">Next ›</a>
                     <?php endif; ?>
                 </div>
                 <?php endif; ?>
 
-            </div> <!-- table-section -->
-        </div> <!-- student-container -->
+            </div>
+        </div>
 
     </div>
 </div>
@@ -262,6 +359,76 @@ new Chart(ctx, {
 });
 </script>
 <?php endif; ?>
+
+<script>
+// All students data
+const allStudents = <?php echo json_encode($all_students_json); ?>;
+
+function liveFilter(val) {
+    const dropdown = document.getElementById('liveDropdown');
+    const tableBody = document.getElementById('tableBody');
+    const v = val.toLowerCase().trim();
+
+    // Table filter
+    const rows = tableBody.querySelectorAll('tr');
+    rows.forEach(function(row){
+        if(v.length === 0){
+            row.style.display = '';
+        } else {
+            const text = row.innerText.toLowerCase();
+            row.style.display = text.includes(v) ? '' : 'none';
+        }
+    });
+
+    // Dropdown
+    if(v.length === 0){
+        dropdown.style.display = 'none';
+        return;
+    }
+
+    const matches = allStudents.filter(s =>
+        s.name.toLowerCase().includes(v) ||
+        s.student_id.toLowerCase().includes(v) ||
+        s.email.toLowerCase().includes(v) ||
+        s.course.toLowerCase().includes(v) ||
+        s.mobile.includes(v)
+    );
+
+    if(matches.length > 0){
+        dropdown.style.display = 'block';
+        dropdown.innerHTML = matches.slice(0, 8).map(s => `
+            <a href="profile.php?id=${s.id}" class="live-item">
+                ${s.photo
+                    ? `<img src="uploads/${s.photo}" alt="">`
+                    : `<div class="av">👤</div>`
+                }
+                <div class="info">
+                    <strong>${s.name}</strong>
+                    <span>${s.course} • ${s.mobile}</span>
+                </div>
+                <span class="sid">${s.student_id}</span>
+            </a>
+        `).join('');
+    } else {
+        dropdown.style.display = 'block';
+        dropdown.innerHTML = '<div class="no-result">🔍 Koi student nahi mila!</div>';
+    }
+}
+
+// Click bahar pe dropdown band
+document.addEventListener('click', function(e){
+    if(!e.target.closest('.live-search-wrapper')){
+        document.getElementById('liveDropdown').style.display = 'none';
+    }
+});
+
+// Enter press pe search
+document.getElementById('liveSearch').addEventListener('keydown', function(e){
+    if(e.key === 'Enter'){
+        window.location.href = 'students.php?search=' + encodeURIComponent(this.value);
+    }
+});
+</script>
 
 </body>
 </html>
