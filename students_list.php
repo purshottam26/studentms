@@ -112,6 +112,9 @@ $total = mysqli_num_rows($result);
             <a href="view_result.php"><span class="icon">📄</span> View Result</a>
             <a href="add_teacher.php"><span class="icon">👩‍🏫</span> Teachers</a>
             <a href="library.php"><span class="icon">📚</span> Library</a>
+            <a href="notice_board.php">📢 Notice Board</a>
+            <a href="attendance.php">✅ Attendance</a>
+            <a href="fees.php">💰 Fee Management</a>
         </div>
         <div class="sidebar-footer">
             <a href="logout.php"><span class="icon">🚪</span> Logout</a>

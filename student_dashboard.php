@@ -85,6 +85,26 @@ $results_q = mysqli_query($conn, "
             </div>
         </div>
 
+        <!-- NOTICES -->
+        <?php
+        $notices = mysqli_query($conn, "SELECT * FROM notices ORDER BY created_at DESC LIMIT 3");
+        if(mysqli_num_rows($notices) > 0):
+        ?>
+        <div class="box">
+            <div class="box-title">📢 Latest Notices</div>
+            <?php while($n = mysqli_fetch_assoc($notices)): ?>
+            <div style="background:<?php echo $n['priority']=='urgent'?'#fff1f2':($n['priority']=='important'?'#fffbeb':'#f8fafc'); ?>;border-left:4px solid <?php echo $n['priority']=='urgent'?'#ef4444':($n['priority']=='important'?'#f59e0b':'#4f46e5'); ?>;padding:12px 16px;border-radius:8px;margin-bottom:10px;">
+                <div style="font-weight:700;font-size:14px;color:#1e293b;margin-bottom:4px;">
+                    <?php echo $n['priority']=='urgent'?'🔴':($n['priority']=='important'?'🟡':'🔵'); ?>
+                    <?php echo htmlspecialchars($n['title']); ?>
+                </div>
+                <div style="font-size:13px;color:#64748b;"><?php echo htmlspecialchars($n['message']); ?></div>
+                <div style="font-size:11px;color:#94a3b8;margin-top:6px;">🕒 <?php echo date('d M Y', strtotime($n['created_at'])); ?></div>
+            </div>
+            <?php endwhile; ?>
+        </div>
+        <?php endif; ?>
+
         <!-- RESULTS TABLE -->
         <div class="box">
             <div class="box-title">📄 My Results</div>

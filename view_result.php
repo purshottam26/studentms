@@ -54,6 +54,9 @@ JOIN exams ON results.exam_id = exams.id
             <a href="view_result.php" class="active">📄 View Result</a>
             <a href="add_teacher.php">👩‍🏫 Teachers</a>
             <a href="library.php">📚 Library</a>
+            <a href="notice_board.php">📢 Notice Board</a>
+            <a href="attendance.php">✅ Attendance</a>
+            <a href="fees.php">💰 Fee Management</a>
         </div>
         <div class="sidebar-footer">
             <a href="logout.php">🚪 Logout</a>

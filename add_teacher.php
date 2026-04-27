@@ -146,6 +146,9 @@ $total_teachers = mysqli_num_rows($teachers_q);
             <a href="view_result.php">📄 View Result</a>
             <a href="add_teacher.php" class="active">👩‍🏫 Teachers</a>
             <a href="library.php">📚 Library</a>
+            <a href="notice_board.php">📢 Notice Board</a>
+            <a href="attendance.php">✅ Attendance</a>
+            <a href="fees.php">💰 Fee Management</a>
         </div>
         <div class="sidebar-footer">
             <a href="logout.php">🚪 Logout</a>
