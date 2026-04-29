@@ -43,7 +43,6 @@ if(isset($_GET['delete'])){
 
 $del_msg = $_GET['msg'] ?? '';
 
-$students_q = mysqli_query($conn, "SELECT * FROM student ORDER BY name");
 $fees_q = mysqli_query($conn, "
     SELECT fees.*, student.name as student_name
     FROM fees
@@ -93,34 +92,14 @@ while($row = mysqli_fetch_assoc($all_q)){
 </head>
 <body>
 <div class="main-container">
-    <div class="sidebar">
-        <div class="sidebar-brand">
-            <h2><span class="brand-icon">🎓</span> <span>StudentMS</span></h2>
-            <p>Admin Panel</p>
-        </div>
-        <div class="sidebar-nav">
-            <div class="nav-label">Main Menu</div>
-            <a href="index.php">📊 Dashboard</a>
-            <a href="students.php">👨‍🎓 Students</a>
-            <a href="students_list.php">📋 All Students</a>
-            <a href="export.php">📤 Export Excel</a>
-            <a href="add_exam.php">📘 Exams</a>
-            <a href="add_result.php">📊 Add Result</a>
-            <a href="view_result.php">📄 View Result</a>
-            <a href="add_teacher.php">👩‍🏫 Teachers</a>
-            <a href="library.php">📚 Library</a>
-            <a href="notice_board.php">📢 Notice Board</a>
-            <a href="attendance.php">✅ Attendance</a>
-            <a href="fees.php" class="active">💰 Fee Management</a>
-        </div>
-        <div class="sidebar-footer">
-            <a href="logout.php">🚪 Logout</a>
-        </div>
-    </div>
+    <?php include_once('sidebar.php'); ?>
 
     <div class="content">
         <div class="topbar">
             <h1>💰 Fee Management</h1>
+            <div class="topbar-right">
+                <div class="admin-badge">👤 <?php echo htmlspecialchars($_SESSION['admin']); ?></div>
+            </div>
         </div>
 
         <?php if($del_msg == 'deleted'): ?>
@@ -161,7 +140,6 @@ while($row = mysqli_fetch_assoc($all_q)){
             <form method="POST" action="fees.php">
                 <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:14px;">
 
-                    <!-- Student Search -->
                     <div>
                         <label style="font-size:12px;font-weight:700;color:#64748b;display:block;margin-bottom:5px;">Select Student *</label>
                         <div class="search-wrapper">
@@ -288,6 +266,7 @@ while($row = mysqli_fetch_assoc($all_q)){
                             <a href="?mark_paid=<?php echo $f['id']; ?>" onclick="return confirm('Mark as paid?')" style="background:#10b981;color:white;padding:5px 10px;border-radius:6px;text-decoration:none;font-size:12px;font-weight:700;">✅ Mark Paid</a>
                             <?php endif; ?>
                             <a href="?delete=<?php echo $f['id']; ?>" onclick="return confirm('Delete?')" style="background:#ef4444;color:white;padding:5px 10px;border-radius:6px;text-decoration:none;font-size:12px;font-weight:700;">🗑️</a>
+                            <a href="fee_receipt.php?id=<?php echo $f['id']; ?>" style="background:#06b6d4;color:white;padding:5px 10px;border-radius:6px;text-decoration:none;font-size:12px;font-weight:700;">🧾 Receipt</a>
                         </div>
                     </td>
                 </tr>

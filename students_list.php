@@ -95,31 +95,8 @@ $total = mysqli_num_rows($result);
 </head>
 <body>
 
-<div class="main-container">
-    <div class="sidebar">
-        <div class="sidebar-brand">
-            <h2><span class="brand-icon">🎓</span> <span>StudentMS</span></h2>
-            <p>Admin Panel</p>
-        </div>
-        <div class="sidebar-nav">
-            <div class="nav-label">Main Menu</div>
-            <a href="index.php"><span class="icon">📊</span> Dashboard</a>
-            <a href="students.php"><span class="icon">👨‍🎓</span> Students</a>
-            <a href="students_list.php" class="active"><span class="icon">📋</span> All Students</a>
-            <a href="export.php"><span class="icon">📤</span> Export Excel</a>
-            <a href="add_exam.php"><span class="icon">📘</span> Exams</a>
-            <a href="add_result.php"><span class="icon">📊</span> Add Result</a>
-            <a href="view_result.php"><span class="icon">📄</span> View Result</a>
-            <a href="add_teacher.php"><span class="icon">👩‍🏫</span> Teachers</a>
-            <a href="library.php"><span class="icon">📚</span> Library</a>
-            <a href="notice_board.php">📢 Notice Board</a>
-            <a href="attendance.php">✅ Attendance</a>
-            <a href="fees.php">💰 Fee Management</a>
-        </div>
-        <div class="sidebar-footer">
-            <a href="logout.php"><span class="icon">🚪</span> Logout</a>
-        </div>
-    </div>
+<!-- SIDEBAR -->
+   <?php include_once('sidebar.php'); ?>
 
     <div class="content">
         <div class="topbar">

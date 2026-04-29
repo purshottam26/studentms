@@ -17,6 +17,13 @@ $results_q = mysqli_query($conn, "
     WHERE results.student_id='$sid'
     ORDER BY results.id DESC
 ");
+
+// Attendance data
+$total_days = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as t FROM attendance WHERE student_id='$sid'"))['t'];
+$present_days = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as t FROM attendance WHERE student_id='$sid' AND status='present'"))['t'];
+$absent_days = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as t FROM attendance WHERE student_id='$sid' AND status='absent'"))['t'];
+$late_days = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as t FROM attendance WHERE student_id='$sid' AND status='late'"))['t'];
+$attendance_percent = $total_days > 0 ? round(($present_days / $total_days) * 100, 1) : 0;
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -25,6 +32,20 @@ $results_q = mysqli_query($conn, "
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Student Dashboard</title>
 <link rel="stylesheet" href="style.css">
+<style>
+.att-progress {
+    height: 12px;
+    background: #e2e8f0;
+    border-radius: 20px;
+    overflow: hidden;
+    margin: 8px 0;
+}
+.att-progress-bar {
+    height: 100%;
+    border-radius: 20px;
+    transition: width 1s ease;
+}
+</style>
 </head>
 <body>
 <div class="main-container">
@@ -40,6 +61,7 @@ $results_q = mysqli_query($conn, "
             <a href="student_admit_card.php">📋 Admit Card</a>
             <a href="student_marksheet.php">📄 Marksheet</a>
             <a href="student_profile.php">👤 My Profile</a>
+            <a href="student_change_password.php">🔐 Change Password</a>
         </div>
         <div class="sidebar-footer">
             <a href="student_logout.php">🚪 Logout</a>
@@ -73,6 +95,14 @@ $results_q = mysqli_query($conn, "
                 <p style="font-size:14px;"><?php echo htmlspecialchars($student['email']); ?></p>
                 <div class="card-sub">My email</div>
             </div>
+            <div class="card">
+                <div class="card-icon <?php echo $attendance_percent>=75?'green':($attendance_percent>=50?'amber':'red'); ?>">✅</div>
+                <h3>Attendance</h3>
+                <p style="font-size:22px;color:<?php echo $attendance_percent>=75?'#10b981':($attendance_percent>=50?'#f59e0b':'#ef4444'); ?>;">
+                    <?php echo $attendance_percent; ?>%
+                </p>
+                <div class="card-sub"><?php echo $present_days; ?>/<?php echo $total_days; ?> days</div>
+            </div>
         </div>
 
         <!-- QUICK ACTIONS -->
@@ -84,6 +114,95 @@ $results_q = mysqli_query($conn, "
                 <a href="student_marksheet.php" style="padding:10px 20px;background:#10b981;color:white;border-radius:8px;text-decoration:none;font-size:14px;font-weight:700;">📄 Marksheet</a>
             </div>
         </div>
+
+        <!-- ATTENDANCE -->
+        <?php if($total_days > 0): ?>
+        <div class="box">
+            <div class="box-title">✅ My Attendance</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:14px;margin-bottom:16px;">
+                <div style="text-align:center;background:#f8fafc;border-radius:10px;padding:14px;">
+                    <div style="font-size:24px;font-weight:800;color:#4f46e5;"><?php echo $total_days; ?></div>
+                    <div style="font-size:12px;color:#64748b;font-weight:700;">Total Days</div>
+                </div>
+                <div style="text-align:center;background:#d1fae5;border-radius:10px;padding:14px;">
+                    <div style="font-size:24px;font-weight:800;color:#10b981;"><?php echo $present_days; ?></div>
+                    <div style="font-size:12px;color:#065f46;font-weight:700;">✅ Present</div>
+                </div>
+                <div style="text-align:center;background:#fee2e2;border-radius:10px;padding:14px;">
+                    <div style="font-size:24px;font-weight:800;color:#ef4444;"><?php echo $absent_days; ?></div>
+                    <div style="font-size:12px;color:#991b1b;font-weight:700;">❌ Absent</div>
+                </div>
+                <div style="text-align:center;background:#fef3c7;border-radius:10px;padding:14px;">
+                    <div style="font-size:24px;font-weight:800;color:#f59e0b;"><?php echo $late_days; ?></div>
+                    <div style="font-size:12px;color:#92400e;font-weight:700;">⏰ Late</div>
+                </div>
+            </div>
+            <div>
+                <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700;margin-bottom:4px;">
+                    <span>Attendance Percentage</span>
+                    <span style="color:<?php echo $attendance_percent>=75?'#10b981':($attendance_percent>=50?'#f59e0b':'#ef4444'); ?>;">
+                        <?php echo $attendance_percent; ?>%
+                    </span>
+                </div>
+                <div class="att-progress">
+                    <div class="att-progress-bar" id="attBar"
+                        style="width:0%;background:<?php echo $attendance_percent>=75?'#10b981':($attendance_percent>=50?'#f59e0b':'#ef4444'); ?>;">
+                    </div>
+                </div>
+                <div style="font-size:12px;color:#64748b;margin-top:4px;">
+                    <?php if($attendance_percent >= 75): ?>
+                    ✅ Attendance theek hai! Keep it up!
+                    <?php elseif($attendance_percent >= 50): ?>
+                    ⚠️ Attendance thodi kam hai — improve karo!
+                    <?php else: ?>
+                    ❌ Attendance bahut kam hai — dhyan do!
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+        <?php endif; ?>
+
+        <!-- FEES -->
+        <?php
+        $fees_q = mysqli_query($conn, "SELECT * FROM fees WHERE student_id='$sid' ORDER BY id DESC");
+        if(mysqli_num_rows($fees_q) > 0):
+        ?>
+        <div class="box">
+            <div class="box-title">💰 My Fees</div>
+            <table style="width:100%;border-collapse:collapse;">
+                <thead>
+                <tr style="background:#4f46e5;color:white;">
+                    <th style="padding:10px 14px;text-align:left;">Fee Type</th>
+                    <th style="padding:10px 14px;text-align:center;">Amount</th>
+                    <th style="padding:10px 14px;text-align:center;">Month</th>
+                    <th style="padding:10px 14px;text-align:center;">Status</th>
+                    <th style="padding:10px 14px;text-align:center;">Receipt</th>
+                </tr>
+                </thead>
+                <tbody>
+                <?php while($f = mysqli_fetch_assoc($fees_q)): ?>
+                <tr style="border-bottom:1px solid #e2e8f0;">
+                    <td style="padding:10px 14px;font-weight:700;"><?php echo htmlspecialchars($f['fee_type']); ?></td>
+                    <td style="padding:10px 14px;text-align:center;font-weight:700;">₹<?php echo number_format($f['amount'],0); ?></td>
+                    <td style="padding:10px 14px;text-align:center;font-size:13px;color:#64748b;"><?php echo $f['month'].' '.$f['year']; ?></td>
+                    <td style="padding:10px 14px;text-align:center;">
+                        <span style="background:<?php echo $f['status']=='paid'?'#d1fae5':'#fee2e2'; ?>;color:<?php echo $f['status']=='paid'?'#065f46':'#991b1b'; ?>;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700;">
+                            <?php echo $f['status']=='paid'?'✅ Paid':'⏳ Unpaid'; ?>
+                        </span>
+                    </td>
+                    <td style="padding:10px 14px;text-align:center;">
+                        <?php if($f['status']=='paid'): ?>
+                        <a href="fee_receipt.php?id=<?php echo $f['id']; ?>" target="_blank" style="background:#4f46e5;color:white;padding:5px 12px;border-radius:6px;text-decoration:none;font-size:12px;font-weight:700;">🧾 Download</a>
+                        <?php else: ?>
+                        <span style="color:#94a3b8;font-size:12px;">—</span>
+                        <?php endif; ?>
+                    </td>
+                </tr>
+                <?php endwhile; ?>
+                </tbody>
+            </table>
+        </div>
+        <?php endif; ?>
 
         <!-- NOTICES -->
         <?php
@@ -155,5 +274,18 @@ $results_q = mysqli_query($conn, "
 
     </div>
 </div>
+
+<script>
+// Attendance bar animate
+window.onload = function(){
+    const bar = document.getElementById('attBar');
+    if(bar){
+        setTimeout(() => {
+            bar.style.width = '<?php echo $attendance_percent; ?>%';
+        }, 300);
+    }
+}
+</script>
+
 </body>
 </html>

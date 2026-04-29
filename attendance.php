@@ -55,30 +55,8 @@ $late_today = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as t FROM 
 </head>
 <body>
 <div class="main-container">
-    <div class="sidebar">
-        <div class="sidebar-brand">
-            <h2><span class="brand-icon">🎓</span> <span>StudentMS</span></h2>
-            <p>Admin Panel</p>
-        </div>
-        <div class="sidebar-nav">
-            <div class="nav-label">Main Menu</div>
-            <a href="index.php">📊 Dashboard</a>
-            <a href="students.php">👨‍🎓 Students</a>
-            <a href="students_list.php">📋 All Students</a>
-            <a href="export.php">📤 Export Excel</a>
-            <a href="add_exam.php">📘 Exams</a>
-            <a href="add_result.php">📊 Add Result</a>
-            <a href="view_result.php">📄 View Result</a>
-            <a href="add_teacher.php">👩‍🏫 Teachers</a>
-            <a href="library.php">📚 Library</a>
-            <a href="notice_board.php">📢 Notice Board</a>
-            <a href="attendance.php" class="active">✅ Attendance</a>
-            <a href="fees.php">💰 Fee Management</a>
-        </div>
-        <div class="sidebar-footer">
-            <a href="logout.php">🚪 Logout</a>
-        </div>
-    </div>
+     <!-- SIDEBAR -->
+   <?php include_once('sidebar.php'); ?>
 
     <div class="content">
         <div class="topbar">

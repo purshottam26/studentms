@@ -36,32 +36,8 @@ JOIN exams ON results.exam_id = exams.id
 <body>
 
 <div class="main-container">
-
-    <!-- SIDEBAR -->
-    <div class="sidebar">
-        <div class="sidebar-brand">
-            <h2><span class="brand-icon">🎓</span> StudentMS</h2>
-            <p>Admin Panel</p>
-        </div>
-        <div class="sidebar-nav">
-            <div class="nav-label">Main Menu</div>
-            <a href="index.php">📊 Dashboard</a>
-            <a href="students.php">👨‍🎓 Students</a>
-            <a href="students_list.php">📋 All Students</a>
-            <a href="export.php">📤 Export Excel</a>
-            <a href="add_exam.php">📘 Exams</a>
-            <a href="add_result.php">📊 Add Result</a>
-            <a href="view_result.php" class="active">📄 View Result</a>
-            <a href="add_teacher.php">👩‍🏫 Teachers</a>
-            <a href="library.php">📚 Library</a>
-            <a href="notice_board.php">📢 Notice Board</a>
-            <a href="attendance.php">✅ Attendance</a>
-            <a href="fees.php">💰 Fee Management</a>
-        </div>
-        <div class="sidebar-footer">
-            <a href="logout.php">🚪 Logout</a>
-        </div>
-    </div>
+<!-- SIDEBAR -->
+   <?php include_once('sidebar.php'); ?>
 
     <!-- CONTENT -->
     <div class="content">

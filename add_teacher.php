@@ -9,6 +9,15 @@ include 'db.php';
 $msg = '';
 $msg_type = '';
 
+// Auto generate teacher ID
+$last_t = mysqli_fetch_assoc(mysqli_query($conn, "SELECT teacher_id FROM teachers ORDER BY id DESC LIMIT 1"));
+$last_tid = $last_t['teacher_id'] ?? '';
+$next_tnum = 1;
+if(preg_match('/(\d+)$/', $last_tid, $m)){
+    $next_tnum = intval($m[1]) + 1;
+}
+$auto_tid = 'TCH-' . date('dmY') . '-' . str_pad($next_tnum, 3, '0', STR_PAD_LEFT);
+
 // Add Teacher
 if(isset($_POST['submit'])){
     $tid = mysqli_real_escape_string($conn, $_POST['teacher_id']);
@@ -16,11 +25,8 @@ if(isset($_POST['submit'])){
     $phone = mysqli_real_escape_string($conn, $_POST['phone']);
     $email = mysqli_real_escape_string($conn, $_POST['email']);
     $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
-    $qualification = mysqli_real_escape_string($conn, $_POST['qualification'] ?? '');
-    $experience = mysqli_real_escape_string($conn, $_POST['experience'] ?? '');
-    $address = mysqli_real_escape_string($conn, $_POST['address'] ?? '');
 
-    // Multiple subjects — array se string banana
+    // Multiple subjects
     $subjects = isset($_POST['subjects']) ? $_POST['subjects'] : [];
     $subject = mysqli_real_escape_string($conn, implode(', ', array_filter($subjects)));
 
@@ -82,78 +88,37 @@ $total_teachers = mysqli_num_rows($teachers_q);
     color:#ef4444; font-size:14px; font-weight:800; padding:0; line-height:1;
 }
 .subject-input-row { display:flex; gap:8px; }
-.subject-input-row input {
-    flex:1; padding:10px 14px; border:1px solid #e2e8f0;
-    border-radius:8px; font-size:14px;
-}
-.subject-input-row button {
-    padding:10px 16px; background:#4f46e5; color:white;
-    border:none; border-radius:8px; cursor:pointer; font-weight:700; font-size:14px;
-}
-.teacher-card {
-    background:white; border-radius:14px; padding:0;
-    box-shadow:0 4px 20px rgba(79,70,229,0.08);
-    overflow:hidden; transition:transform 0.2s;
-    border:1px solid #e2e8f0;
-}
+.subject-input-row input { flex:1; padding:10px 14px; border:1px solid #e2e8f0; border-radius:8px; font-size:14px; }
+.subject-input-row button { padding:10px 16px; background:#4f46e5; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:700; font-size:14px; }
+.teacher-card { background:white; border-radius:14px; padding:0; box-shadow:0 4px 20px rgba(79,70,229,0.08); overflow:hidden; transition:transform 0.2s; border:1px solid #e2e8f0; }
 .teacher-card:hover { transform:translateY(-4px); box-shadow:0 8px 30px rgba(79,70,229,0.15); }
-.teacher-card-header {
-    background:linear-gradient(135deg,#4f46e5,#06b6d4);
-    padding:20px; text-align:center; position:relative;
-}
-.teacher-card-photo {
-    width:80px; height:80px; border-radius:50%;
-    border:4px solid white; object-fit:cover;
-    margin:0 auto; display:block;
-    box-shadow:0 4px 12px rgba(0,0,0,0.2);
-}
-.teacher-card-avatar {
-    width:80px; height:80px; border-radius:50%;
-    border:4px solid white; background:rgba(255,255,255,0.2);
-    display:flex; align-items:center; justify-content:center;
-    font-size:32px; margin:0 auto;
-}
+.teacher-card-header { background:linear-gradient(135deg,#4f46e5,#06b6d4); padding:20px; text-align:center; }
+.teacher-card-photo { width:80px; height:80px; border-radius:50%; border:4px solid white; object-fit:cover; margin:0 auto; display:block; box-shadow:0 4px 12px rgba(0,0,0,0.2); }
+.teacher-card-avatar { width:80px; height:80px; border-radius:50%; border:4px solid white; background:rgba(255,255,255,0.2); display:flex; align-items:center; justify-content:center; font-size:32px; margin:0 auto; }
 .teacher-card-body { padding:16px; }
 .teacher-card-name { font-size:16px; font-weight:800; color:#1e293b; margin-bottom:4px; text-align:center; }
 .teacher-card-id { text-align:center; margin-bottom:10px; }
-.subject-chip {
-    display:inline-block; background:rgba(16,185,129,0.1); color:#059669;
-    padding:3px 10px; border-radius:20px; font-size:11px; font-weight:700;
-    margin:2px;
-}
+.subject-chip { display:inline-block; background:rgba(16,185,129,0.1); color:#059669; padding:3px 10px; border-radius:20px; font-size:11px; font-weight:700; margin:2px; }
 .teacher-card-info { font-size:12px; color:#64748b; margin:4px 0; }
 .teacher-card-actions { display:flex; gap:8px; margin-top:12px; }
 .teachers-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(260px,1fr)); gap:18px; }
+.auto-id-box {
+    background: linear-gradient(135deg, rgba(79,70,229,0.08), rgba(6,182,212,0.08));
+    border: 2px dashed #4f46e5;
+    border-radius: 10px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.radio-group { display:flex; gap:16px; margin-bottom:8px; }
+.radio-group label { display:flex; align-items:center; gap:6px; font-size:13px; font-weight:700; cursor:pointer; }
 </style>
 </head>
 <body>
 <div class="main-container">
 
-    <!-- SIDEBAR -->
-    <div class="sidebar">
-        <div class="sidebar-brand">
-            <h2><span class="brand-icon">🎓</span> <span>StudentMS</span></h2>
-            <p>Admin Panel</p>
-        </div>
-        <div class="sidebar-nav">
-            <div class="nav-label">Main Menu</div>
-            <a href="index.php">📊 Dashboard</a>
-            <a href="students.php">👨‍🎓 Students</a>
-            <a href="students_list.php">📋 All Students</a>
-            <a href="export.php">📤 Export Excel</a>
-            <a href="add_exam.php">📘 Exams</a>
-            <a href="add_result.php">📊 Add Result</a>
-            <a href="view_result.php">📄 View Result</a>
-            <a href="add_teacher.php" class="active">👩‍🏫 Teachers</a>
-            <a href="library.php">📚 Library</a>
-            <a href="notice_board.php">📢 Notice Board</a>
-            <a href="attendance.php">✅ Attendance</a>
-            <a href="fees.php">💰 Fee Management</a>
-        </div>
-        <div class="sidebar-footer">
-            <a href="logout.php">🚪 Logout</a>
-        </div>
-    </div>
+    <?php include_once('sidebar.php'); ?>
 
     <div class="content">
         <div class="topbar">
@@ -178,23 +143,45 @@ $total_teachers = mysqli_num_rows($teachers_q);
             <div class="box-title">➕ Add New Teacher</div>
             <form method="POST" enctype="multipart/form-data" id="teacherForm">
 
-                <!-- Row 1 -->
                 <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:14px;">
+
+                    <!-- TEACHER ID AUTO/MANUAL -->
                     <div>
                         <label style="font-size:12px;font-weight:700;color:#64748b;display:block;margin-bottom:5px;">Teacher ID *</label>
-                        <input type="text" name="teacher_id" placeholder="e.g. TCH001" required style="width:100%;padding:10px 14px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;">
+                        <div class="radio-group">
+                            <label>
+                                <input type="radio" name="tid_type" value="auto" checked onchange="toggleTID(this.value)">
+                                🔄 Auto
+                            </label>
+                            <label>
+                                <input type="radio" name="tid_type" value="manual" onchange="toggleTID(this.value)">
+                                ✏️ Manual
+                            </label>
+                        </div>
+                        <div class="auto-id-box" id="auto_tid_box">
+                            <span style="font-size:20px;">🪪</span>
+                            <div>
+                                <div style="font-size:10px;color:#64748b;font-weight:700;text-transform:uppercase;">Auto Generated</div>
+                                <div style="font-size:16px;font-weight:800;color:#4f46e5;"><?php echo $auto_tid; ?></div>
+                            </div>
+                            <input type="hidden" name="teacher_id" id="auto_tid_input" value="<?php echo $auto_tid; ?>">
+                        </div>
+                        <div id="manual_tid_box" style="display:none;margin-top:6px;">
+                            <input type="text" id="manual_tid_input" placeholder="e.g. TCH001" style="width:100%;padding:10px 14px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;">
+                        </div>
                     </div>
+
                     <div>
                         <label style="font-size:12px;font-weight:700;color:#64748b;display:block;margin-bottom:5px;">Full Name *</label>
                         <input type="text" name="name" placeholder="Teacher full name" required style="width:100%;padding:10px 14px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;">
                     </div>
+
                     <div>
                         <label style="font-size:12px;font-weight:700;color:#64748b;display:block;margin-bottom:5px;">Phone</label>
                         <input type="text" name="phone" placeholder="Phone number" style="width:100%;padding:10px 14px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;">
                     </div>
                 </div>
 
-                <!-- Row 2 -->
                 <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:14px;">
                     <div>
                         <label style="font-size:12px;font-weight:700;color:#64748b;display:block;margin-bottom:5px;">Email</label>
@@ -212,7 +199,7 @@ $total_teachers = mysqli_num_rows($teachers_q);
 
                 <!-- MULTIPLE SUBJECTS -->
                 <div style="margin-bottom:14px;">
-                    <label style="font-size:12px;font-weight:700;color:#64748b;display:block;margin-bottom:8px;">📚 Subjects (Multiple add kar sakte ho) *</label>
+                    <label style="font-size:12px;font-weight:700;color:#64748b;display:block;margin-bottom:8px;">📚 Subjects *</label>
                     <div class="subject-tags" id="subjectTags"></div>
                     <div class="subject-input-row">
                         <input type="text" id="subjectInput" placeholder="Subject likho e.g. Mathematics, Physics..." onkeydown="if(event.key==='Enter'){event.preventDefault();addSubject();}">
@@ -226,7 +213,7 @@ $total_teachers = mysqli_num_rows($teachers_q);
             </form>
         </div>
 
-        <!-- ALL TEACHERS - CARD VIEW -->
+        <!-- ALL TEACHERS CARD VIEW -->
         <div class="box">
             <div class="box-title">👩‍🏫 All Teachers (<?php echo $total_teachers; ?>)</div>
             <?php if($total_teachers > 0): ?>
@@ -249,8 +236,6 @@ $total_teachers = mysqli_num_rows($teachers_q);
                         <div class="teacher-card-id">
                             <span style="background:rgba(6,182,212,0.1);color:#0891b2;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700;"><?php echo $t['teacher_id']; ?></span>
                         </div>
-
-                        <!-- Subjects chips -->
                         <div style="text-align:center;margin-bottom:10px;">
                             <?php foreach($subjects as $sub): ?>
                             <?php if(trim($sub)): ?>
@@ -258,10 +243,8 @@ $total_teachers = mysqli_num_rows($teachers_q);
                             <?php endif; ?>
                             <?php endforeach; ?>
                         </div>
-
                         <div class="teacher-card-info">📞 <?php echo htmlspecialchars($t['phone'] ?? 'N/A'); ?></div>
                         <div class="teacher-card-info">📧 <?php echo htmlspecialchars($t['email'] ?? 'N/A'); ?></div>
-
                         <div class="teacher-card-actions">
                             <a href="admin_teacher_id_card.php?id=<?php echo $t['id']; ?>" style="flex:1;text-align:center;background:#4f46e5;color:white;padding:7px;border-radius:7px;text-decoration:none;font-size:12px;font-weight:700;">🪪 ID Card</a>
                             <a href="?delete=<?php echo $t['id']; ?>" onclick="return confirm('Delete <?php echo htmlspecialchars($t['name']); ?>?')" style="flex:1;text-align:center;background:#ef4444;color:white;padding:7px;border-radius:7px;text-decoration:none;font-size:12px;font-weight:700;">🗑️ Delete</a>
@@ -288,10 +271,7 @@ function addSubject() {
     const input = document.getElementById('subjectInput');
     const val = input.value.trim();
     if(!val) return;
-    if(subjects.includes(val)){
-        alert('Ye subject already add hai!');
-        return;
-    }
+    if(subjects.includes(val)){ alert('Ye subject already add hai!'); return; }
     subjects.push(val);
     input.value = '';
     renderSubjects();
@@ -305,20 +285,37 @@ function removeSubject(idx) {
 function renderSubjects() {
     const tags = document.getElementById('subjectTags');
     const hidden = document.getElementById('subjectsHidden');
-
     tags.innerHTML = subjects.map((s, i) => `
         <div class="subject-tag">
             📖 ${s}
             <button type="button" onclick="removeSubject(${i})">×</button>
         </div>
     `).join('');
-
     hidden.innerHTML = subjects.map(s =>
         `<input type="hidden" name="subjects[]" value="${s}">`
     ).join('');
 }
 
-// Form submit validation
+function toggleTID(val){
+    const autoBox = document.getElementById('auto_tid_box');
+    const manualBox = document.getElementById('manual_tid_box');
+    const autoInput = document.getElementById('auto_tid_input');
+    const manualInput = document.getElementById('manual_tid_input');
+    if(val === 'auto'){
+        autoBox.style.display = 'flex';
+        manualBox.style.display = 'none';
+        autoInput.name = 'teacher_id';
+        manualInput.name = '';
+        manualInput.required = false;
+    } else {
+        autoBox.style.display = 'none';
+        manualBox.style.display = 'block';
+        autoInput.name = '';
+        manualInput.name = 'teacher_id';
+        manualInput.required = true;
+    }
+}
+
 document.getElementById('teacherForm').addEventListener('submit', function(e){
     if(subjects.length === 0){
         e.preventDefault();
