@@ -1,8 +1,8 @@
 <?php
 session_start();
 if(!isset($_SESSION['student_id'])){
-    header("Location: student_login.php");
-    exit();
+    header("Location: student_credentials.php?sid=".urlencode($student_id)."&pass=".urlencode($student_id));
+exit();
 }
 include 'db.php';
 

@@ -16,8 +16,52 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
     $mobile = mysqli_real_escape_string($conn, preg_replace('/\D/', '', $_POST['mobile']));
     $whatsapp = mysqli_real_escape_string($conn, preg_replace('/\D/', '', $_POST['whatsapp'] ?? ''));
     $pincode = mysqli_real_escape_string($conn, preg_replace('/\D/', '', $_POST['pincode']));
-    $dob = !empty($_POST['dob']) ? mysqli_real_escape_string($conn, $_POST['dob']) : NULL;
-    $doj = !empty($_POST['doj']) ? mysqli_real_escape_string($conn, $_POST['doj']) : NULL;
+
+    $today = date('Y-m-d');
+    $error = '';
+
+    // DOB Validation
+    $dob = !empty($_POST['dob']) ? $_POST['dob'] : NULL;
+    if($dob){
+        if($dob >= $today){
+            $error = "❌ Date of Birth future mein nahi ho sakti!";
+        } else {
+            $age = date_diff(date_create($dob), date_create($today))->y;
+            if($age < 5){
+                $error = "❌ Student ki age kam se kam 5 saal honi chahiye!";
+            } elseif($age > 40){
+                $error = "❌ Student ki age 40 saal se zyada nahi ho sakti!";
+            }
+        }
+    }
+
+    // DOJ Validation
+    $doj = !empty($_POST['doj']) ? $_POST['doj'] : NULL;
+    if($doj && !$error){
+        if($doj > $today){
+            $error = "❌ Date of Joining future mein nahi ho sakti!";
+        }
+        if($dob && $doj < $dob){
+            $error = "❌ Date of Joining, Date of Birth se pehle nahi ho sakti!";
+        }
+        if($dob && !$error){
+            $age_at_join = date_diff(date_create($dob), date_create($doj))->y;
+            if($age_at_join < 5){
+                $error = "❌ Joining ke waqt student ki age kam se kam 5 saal honi chahiye!";
+            }
+        }
+    }
+
+    if($error){
+        echo "<!DOCTYPE html><html><head><link rel='stylesheet' href='style.css'></head><body>";
+        echo "<div style='max-width:500px;margin:50px auto;padding:24px;background:#fee2e2;border-radius:14px;border-left:5px solid #ef4444;'>";
+        echo "<h2 style='color:#991b1b;margin-bottom:12px;'>⚠️ Validation Error</h2>";
+        echo "<p style='color:#991b1b;font-weight:700;font-size:15px;'>".$error."</p>";
+        echo "<a href='javascript:history.back()' style='display:inline-block;margin-top:16px;padding:10px 20px;background:#4f46e5;color:white;border-radius:8px;text-decoration:none;font-weight:700;'>← Wapas Jao</a>";
+        echo "</div></body></html>";
+        exit();
+    }
+
     $dob_val = $dob ? "'$dob'" : "NULL";
     $doj_val = $doj ? "'$doj'" : "NULL";
 
@@ -50,6 +94,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
         echo "<h2 style='color:red;padding:20px;'>❌ Error: " . mysqli_error($conn) . "</h2>";
         echo "<a href='javascript:history.back()' style='padding:20px;display:block;'>← Back</a>";
     }
+
 } else {
     header("Location: students.php");
     exit();

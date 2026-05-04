@@ -8,6 +8,9 @@ include 'db.php';
 
 $msg = '';
 $msg_type = '';
+$show_cred = false;
+$cred_tid = '';
+$cred_pass = '';
 
 // Auto generate teacher ID
 $last_t = mysqli_fetch_assoc(mysqli_query($conn, "SELECT teacher_id FROM teachers ORDER BY id DESC LIMIT 1"));
@@ -24,7 +27,8 @@ if(isset($_POST['submit'])){
     $name = mysqli_real_escape_string($conn, $_POST['name']);
     $phone = mysqli_real_escape_string($conn, $_POST['phone']);
     $email = mysqli_real_escape_string($conn, $_POST['email']);
-    $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
+    $plain_pass = $_POST['password'];
+    $password = password_hash($plain_pass, PASSWORD_DEFAULT);
 
     // Multiple subjects
     $subjects = isset($_POST['subjects']) ? $_POST['subjects'] : [];
@@ -48,8 +52,11 @@ if(isset($_POST['submit'])){
         $r = mysqli_query($conn, "INSERT INTO teachers (teacher_id,name,subject,phone,email,photo,password)
         VALUES ('$tid','$name','$subject','$phone','$email','$photo','$password')");
         if($r){
-            $msg = "✅ Teacher added! ID: <strong>$tid</strong> | Subjects: <strong>$subject</strong>";
+            $msg = "✅ Teacher added successfully!";
             $msg_type = 'success';
+            $show_cred = true;
+            $cred_tid = $tid;
+            $cred_pass = $plain_pass;
         } else {
             $msg = "❌ Error: " . mysqli_error($conn);
             $msg_type = 'error';
@@ -78,15 +85,8 @@ $total_teachers = mysqli_num_rows($teachers_q);
 <link rel="stylesheet" href="style.css">
 <style>
 .subject-tags { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px; }
-.subject-tag {
-    background:rgba(79,70,229,0.1); color:#4f46e5;
-    padding:5px 12px; border-radius:20px; font-size:13px; font-weight:700;
-    display:flex; align-items:center; gap:6px;
-}
-.subject-tag button {
-    background:none; border:none; cursor:pointer;
-    color:#ef4444; font-size:14px; font-weight:800; padding:0; line-height:1;
-}
+.subject-tag { background:rgba(79,70,229,0.1); color:#4f46e5; padding:5px 12px; border-radius:20px; font-size:13px; font-weight:700; display:flex; align-items:center; gap:6px; }
+.subject-tag button { background:none; border:none; cursor:pointer; color:#ef4444; font-size:14px; font-weight:800; padding:0; line-height:1; }
 .subject-input-row { display:flex; gap:8px; }
 .subject-input-row input { flex:1; padding:10px 14px; border:1px solid #e2e8f0; border-radius:8px; font-size:14px; }
 .subject-input-row button { padding:10px 16px; background:#4f46e5; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:700; font-size:14px; }
@@ -102,17 +102,17 @@ $total_teachers = mysqli_num_rows($teachers_q);
 .teacher-card-info { font-size:12px; color:#64748b; margin:4px 0; }
 .teacher-card-actions { display:flex; gap:8px; margin-top:12px; }
 .teachers-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(260px,1fr)); gap:18px; }
-.auto-id-box {
-    background: linear-gradient(135deg, rgba(79,70,229,0.08), rgba(6,182,212,0.08));
-    border: 2px dashed #4f46e5;
-    border-radius: 10px;
-    padding: 12px 16px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
+.auto-id-box { background:linear-gradient(135deg,rgba(79,70,229,0.08),rgba(6,182,212,0.08)); border:2px dashed #4f46e5; border-radius:10px; padding:12px 16px; display:flex; align-items:center; gap:12px; }
 .radio-group { display:flex; gap:16px; margin-bottom:8px; }
 .radio-group label { display:flex; align-items:center; gap:6px; font-size:13px; font-weight:700; cursor:pointer; }
+
+/* Credentials Card */
+.cred-card { background:white; border-radius:16px; overflow:hidden; box-shadow:0 10px 40px rgba(6,182,212,0.2); border:2px solid #06b6d4; margin-bottom:20px; }
+.cred-header { background:linear-gradient(135deg,#06b6d4,#4f46e5); padding:20px; color:white; text-align:center; }
+.cred-body { padding:22px; }
+.cred-box { background:#f8fafc; border:2px dashed #06b6d4; border-radius:12px; padding:16px; margin-bottom:12px; }
+.cred-box label { font-size:11px; font-weight:700; color:#64748b; text-transform:uppercase; display:block; margin-bottom:6px; }
+.cred-value { font-size:20px; font-weight:800; color:#06b6d4; letter-spacing:1px; font-family:monospace; }
 </style>
 </head>
 <body>
@@ -135,6 +135,44 @@ $total_teachers = mysqli_num_rows($teachers_q);
         <?php if($msg): ?>
         <div style="background:<?php echo $msg_type=='success'?'#d1fae5':'#fee2e2'; ?>;border-radius:10px;padding:14px 18px;margin-bottom:18px;font-weight:700;color:<?php echo $msg_type=='success'?'#065f46':'#991b1b'; ?>;">
             <?php echo $msg; ?>
+        </div>
+        <?php endif; ?>
+
+        <!-- CREDENTIALS CARD — Teacher add hone ke baad -->
+        <?php if($show_cred): ?>
+        <div class="cred-card">
+            <div class="cred-header">
+                <div style="font-size:28px;margin-bottom:6px;">👩‍🏫</div>
+                <h2 style="font-size:16px;font-weight:800;margin-bottom:4px;">Teacher Login Credentials</h2>
+                <p style="font-size:12px;opacity:0.85;">Ye credentials teacher ko de do</p>
+            </div>
+            <div class="cred-body">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
+                    <div class="cred-box">
+                        <label>🪪 Login ID (Teacher ID)</label>
+                        <div class="cred-value"><?php echo htmlspecialchars($cred_tid); ?></div>
+                    </div>
+                    <div class="cred-box" style="border-color:#10b981;">
+                        <label>🔒 Password</label>
+                        <div class="cred-value" style="color:#10b981;"><?php echo htmlspecialchars($cred_pass); ?></div>
+                    </div>
+                </div>
+                <div style="background:#fef3c7;border-left:4px solid #f59e0b;padding:10px 14px;border-radius:8px;font-size:12px;color:#92400e;font-weight:700;margin-bottom:14px;">
+                    ⚠️ Ye credentials print karke teacher ko de do. Login ke baad password change karna zaroori hai!
+                </div>
+                <div style="display:flex;gap:10px;">
+                    <a href="teacher_credentials.php?tid=<?php echo urlencode($cred_tid); ?>&pass=<?php echo urlencode($cred_pass); ?>"
+                       target="_blank"
+                       style="flex:1;text-align:center;padding:11px;background:#06b6d4;color:white;border-radius:8px;text-decoration:none;font-size:14px;font-weight:700;">
+                        🖨️ Print Full Credentials
+                    </a>
+                    <a href="admin_teacher_id_card.php?id=<?php echo mysqli_insert_id($conn); ?>"
+                       target="_blank"
+                       style="flex:1;text-align:center;padding:11px;background:#4f46e5;color:white;border-radius:8px;text-decoration:none;font-size:14px;font-weight:700;">
+                        🪪 Print ID Card
+                    </a>
+                </div>
+            </div>
         </div>
         <?php endif; ?>
 
@@ -189,7 +227,7 @@ $total_teachers = mysqli_num_rows($teachers_q);
                     </div>
                     <div>
                         <label style="font-size:12px;font-weight:700;color:#64748b;display:block;margin-bottom:5px;">Password *</label>
-                        <input type="password" name="password" placeholder="Set login password" required style="width:100%;padding:10px 14px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;">
+                        <input type="password" name="password" id="passInput" placeholder="Set login password" required style="width:100%;padding:10px 14px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;">
                     </div>
                     <div>
                         <label style="font-size:12px;font-weight:700;color:#64748b;display:block;margin-bottom:5px;">Photo</label>
