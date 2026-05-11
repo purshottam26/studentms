@@ -17,6 +17,10 @@
             <a href="notice_board.php">📢 Notice Board</a>
             <a href="attendance.php">✅ Attendance</a>
             <a href="fees.php">💰 Fee Management</a>
+            <a href="timetable.php">📅 Timetable</a>
+            <a href="report_card.php">📊 Report Card</a>
+            <a href="student_timetable.php">📅 Timetable</a>
+            <a href="student_profile_edit.php">👤 Edit Profile</a>
             <a href="change_password.php">🔐 Change Password</a>
         </div>
         <div class="sidebar-footer">
