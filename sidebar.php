@@ -27,6 +27,7 @@ $is_admin = isset($_SESSION['admin']);
             <a href="attendance.php">✅ Attendance</a>
             <a href="fees.php">💰 Fee Management</a>
             <a href="timetable.php">📅 Timetable</a>
+            <a href="courses.php">📚 Courses</a>
             <a href="report_card.php">📊 Report Card</a>
             <a href="student_timetable.php">📅 Timetable</a>
             <a href="student_profile_edit.php">👤 Edit Profile</a>

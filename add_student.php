@@ -1,27 +1,54 @@
 <?php
 include 'db.php';
+$errors = [];
 
 if(isset($_POST['submit'])){
-    $id = $_POST['student_id'];
-    $name = $_POST['name'];
-    $email = $_POST['email'];
-    $course = $_POST['course'];
-    $aadhaar = $_POST['aadhaar'];
-    $mobile = $_POST['mobile'];
-    $pincode = $_POST['pincode'];
+    $id = trim($_POST['student_id'] ?? '');
+    $name = trim($_POST['name'] ?? '');
+    $email = trim($_POST['email'] ?? '');
+    $course = trim($_POST['course'] ?? '');
+    $aadhaar = trim($_POST['aadhaar'] ?? '');
+    $mobile = trim($_POST['mobile'] ?? '');
+    $pincode = trim($_POST['pincode'] ?? '');
+    $photo = '';
 
-    // Photo Upload
-    $photo = $_FILES['photo']['name'];
-    $temp = $_FILES['photo']['tmp_name'];
-    move_uploaded_file($temp, "uploads/".$photo);
+    if($id === ''){
+        $errors[] = 'Student ID is required.';
+    }
+    if($name === ''){
+        $errors[] = 'Student name is required.';
+    }
+    if($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)){
+        $errors[] = 'A valid email address is required.';
+    }
 
-    $query = "INSERT INTO students 
-    (student_id, name, email, course, aadhaar, mobile, pincode, photo) 
-    VALUES ('$id','$name','$email','$course','$aadhaar','$mobile','$pincode','$photo')";
+    if(!empty($_FILES['photo']['name'])){
+        $allowed_extensions = ['jpg', 'jpeg', 'png', 'gif'];
+        $upload_dir = __DIR__ . '/uploads/';
+        if(!is_dir($upload_dir)){
+            mkdir($upload_dir, 0755, true);
+        }
 
-    mysqli_query($conn, $query);
+        $extension = strtolower(pathinfo($_FILES['photo']['name'], PATHINFO_EXTENSION));
+        if(!in_array($extension, $allowed_extensions, true)){
+            $errors[] = 'Photo must be a JPG, JPEG, PNG, or GIF file.';
+        } else {
+            $photo = time() . '_' . preg_replace('/[^a-zA-Z0-9._-]/', '', basename($_FILES['photo']['name']));
+            if(!move_uploaded_file($_FILES['photo']['tmp_name'], $upload_dir . $photo)){
+                $errors[] = 'Unable to save the uploaded photo.';
+            }
+        }
+    }
 
-    header("Location: index.php"); // wapas list page
+    if(empty($errors)){
+        $stmt = mysqli_prepare($conn, "INSERT INTO students (student_id, name, email, course, aadhaar, mobile, pincode, photo) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+        mysqli_stmt_bind_param($stmt, 'ssssssss', $id, $name, $email, $course, $aadhaar, $mobile, $pincode, $photo);
+        mysqli_stmt_execute($stmt);
+        mysqli_stmt_close($stmt);
+
+        header("Location: index.php"); // wapas list page
+        exit();
+    }
 }
 ?>
 
@@ -33,6 +60,17 @@ if(isset($_POST['submit'])){
 <body>
 
 <h2>Add Student</h2>
+
+<?php if(!empty($errors)): ?>
+    <div style="background:#fee2e2;color:#991b1b;padding:12px 16px;border-radius:10px;margin-bottom:18px;">
+        <strong>Please fix these issues:</strong>
+        <ul style="margin:10px 0 0 18px;">
+            <?php foreach($errors as $error): ?>
+                <li><?php echo htmlspecialchars($error); ?></li>
+            <?php endforeach; ?>
+        </ul>
+    </div>
+<?php endif; ?>
 
 <form method="POST" enctype="multipart/form-data">
     <input type="text" name="student_id" placeholder="Student ID" required><br><br>

@@ -13,12 +13,23 @@ if(isset($_POST['login'])){
     $username = trim($_POST['username']);
     $password = trim($_POST['password']);
 
-    $q = mysqli_query($conn, "SELECT * FROM admin WHERE username='".mysqli_real_escape_string($conn,$username)."'");
+    $username_safe = mysqli_real_escape_string($conn, $username);
+    $q = mysqli_query($conn, "SELECT * FROM admin WHERE username='$username_safe'");
     $admin = mysqli_fetch_assoc($q);
 
     if($admin){
-        if(password_verify($password, $admin['password']) || $password === $admin['password']){
+        if(password_verify($password, $admin['password'])){
             $_SESSION['admin'] = $admin['username'];
+            header("Location: index.php");
+            exit();
+        } elseif($password === $admin['password']){
+            // Legacy plaintext password support: upgrade to a secure hash on first login.
+            $_SESSION['admin'] = $admin['username'];
+            $hashed = password_hash($password, PASSWORD_DEFAULT);
+            $update = mysqli_prepare($conn, "UPDATE admin SET password = ? WHERE username = ?");
+            mysqli_stmt_bind_param($update, 'ss', $hashed, $username);
+            mysqli_stmt_execute($update);
+            mysqli_stmt_close($update);
             header("Location: index.php");
             exit();
         } else {
@@ -304,7 +315,9 @@ while($t = mysqli_fetch_assoc($teachers_q)) $teachers_list[] = $t;
             <?php endif; ?>
             <button type="submit" name="login">🚀 Login as Admin</button>
         </form>
-
+        <p style="text-align:center;margin-top:16px;font-size:13px;color:#111;font-weight:700;line-height:1.5;">
+            Admin login karne ke liye apna username aur password sahi se bharein. Agar aapko dikhai nahi de raha ho to page ko thoda scroll karein.
+        </p>
     </div>
 </div>
 

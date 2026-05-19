@@ -16,6 +16,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
     $mobile = mysqli_real_escape_string($conn, preg_replace('/\D/', '', $_POST['mobile']));
     $whatsapp = mysqli_real_escape_string($conn, preg_replace('/\D/', '', $_POST['whatsapp'] ?? ''));
     $pincode = mysqli_real_escape_string($conn, preg_replace('/\D/', '', $_POST['pincode']));
+    $password_raw = trim($_POST['password'] ?? '');
 
     $today = date('Y-m-d');
     $error = '';
@@ -82,12 +83,13 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
         }
     }
 
-    $query = "INSERT INTO student (student_id, name, father_name, email, course, aadhaar, mobile, whatsapp, pincode, dob, doj, photo)
-              VALUES ('$student_id','$name','$father_name','$email','$course','$aadhaar','$mobile','$whatsapp','$pincode',$dob_val,$doj_val,'$photo')";
+    $plain_pass = $password_raw !== '' ? $password_raw : $student_id;
+    $hashed_pass = password_hash($plain_pass, PASSWORD_DEFAULT);
+
+    $query = "INSERT INTO student (student_id, name, father_name, email, course, aadhaar, mobile, whatsapp, pincode, dob, doj, photo, password)
+              VALUES ('$student_id','$name','$father_name','$email','$course','$aadhaar','$mobile','$whatsapp','$pincode',$dob_val,$doj_val,'$photo','$hashed_pass')";
 
     if(mysqli_query($conn, $query)){
-        $default_pass = password_hash($student_id, PASSWORD_DEFAULT);
-        mysqli_query($conn, "UPDATE student SET password='$default_pass' WHERE student_id='$student_id'");
         header("Location: students.php?msg=added");
         exit();
     } else {

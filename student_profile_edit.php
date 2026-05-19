@@ -113,6 +113,7 @@ if(isset($_POST['update'])){
             <a href="student_marksheet.php">📄 Marksheet</a>
             <a href="report_card.php">📊 Report Card</a>
             <a href="student_timetable.php">📅 Timetable</a>
+            <a href="notice_board_view.php">📢 Notice Board</a>
             <a href="student_profile_edit.php" class="active">👤 Edit Profile</a>
             <a href="student_change_password.php">🔐 Change Password</a>
         </div>

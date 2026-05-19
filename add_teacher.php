@@ -6,6 +6,16 @@ if(!isset($_SESSION['admin'])){
 }
 include 'db.php';
 
+// Ensure dob and doj columns exist in teachers table
+$check_dob = mysqli_query($conn, "SHOW COLUMNS FROM teachers LIKE 'dob'");
+if(mysqli_num_rows($check_dob) == 0){
+    mysqli_query($conn, "ALTER TABLE teachers ADD COLUMN dob DATE NULL");
+}
+$check_doj = mysqli_query($conn, "SHOW COLUMNS FROM teachers LIKE 'doj'");
+if(mysqli_num_rows($check_doj) == 0){
+    mysqli_query($conn, "ALTER TABLE teachers ADD COLUMN doj DATE NULL");
+}
+
 $msg = '';
 $msg_type = '';
 $show_cred = false;
@@ -27,9 +37,48 @@ if(isset($_POST['submit'])){
     $name = mysqli_real_escape_string($conn, $_POST['name']);
     $phone = mysqli_real_escape_string($conn, $_POST['phone']);
     $email = mysqli_real_escape_string($conn, $_POST['email']);
+    $dob = !empty($_POST['dob']) ? $_POST['dob'] : NULL;
+    $doj = !empty($_POST['doj']) ? $_POST['doj'] : NULL;
     $plain_pass = $_POST['password'];
     $password = password_hash($plain_pass, PASSWORD_DEFAULT);
 
+    $error = '';
+    $today = date('Y-m-d');
+
+    // DOB validation
+    if($dob){
+        if($dob >= $today){
+            $error = "❌ Date of Birth future mein nahi ho sakti!";
+        } else {
+            $age = date_diff(date_create($dob), date_create($today))->y;
+            if($age < 18){
+                $error = "❌ Teacher ki age kam se kam 18 saal honi chahiye!";
+            } elseif($age > 70){
+                $error = "❌ Teacher ki age 70 saal se zyada nahi ho sakti!";
+            }
+        }
+    }
+
+    // DOJ validation aur DOB-DOJ gap check
+    if($doj && !$error){
+        if($doj > $today){
+            $error = "❌ Date of Joining future mein nahi ho sakti!";
+        }
+        if($dob && $doj < $dob){
+            $error = "❌ Date of Joining, Date of Birth se pehle nahi ho sakti!";
+        }
+        if($dob && !$error){
+            $gap = date_diff(date_create($dob), date_create($doj))->y;
+            if($gap < 20){
+                $error = "❌ Joining ke waqt teacher ki age kam se kam 20 saal honi chahiye!";
+            }
+        }
+    }
+
+    if($error){
+        $msg = $error;
+        $msg_type = 'error';
+    } else {
     // Multiple subjects
     $subjects = isset($_POST['subjects']) ? $_POST['subjects'] : [];
     $subject = mysqli_real_escape_string($conn, implode(', ', array_filter($subjects)));
@@ -49,8 +98,10 @@ if(isset($_POST['submit'])){
         $msg = "❌ Teacher ID already exists!";
         $msg_type = 'error';
     } else {
-        $r = mysqli_query($conn, "INSERT INTO teachers (teacher_id,name,subject,phone,email,photo,password)
-        VALUES ('$tid','$name','$subject','$phone','$email','$photo','$password')");
+        $dob_val = $dob ? "'$dob'" : "NULL";
+        $doj_val = $doj ? "'$doj'" : "NULL";
+        $r = mysqli_query($conn, "INSERT INTO teachers (teacher_id,name,subject,phone,email,photo,password,dob,doj)
+        VALUES ('$tid','$name','$subject','$phone','$email','$photo','$password',$dob_val,$doj_val)");
         if($r){
             $msg = "✅ Teacher added successfully!";
             $msg_type = 'success';
@@ -61,6 +112,7 @@ if(isset($_POST['submit'])){
             $msg = "❌ Error: " . mysqli_error($conn);
             $msg_type = 'error';
         }
+    }
     }
 }
 
@@ -220,14 +272,20 @@ $total_teachers = mysqli_num_rows($teachers_q);
                     </div>
                 </div>
 
-                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:14px;">
                     <div>
-                        <label style="font-size:12px;font-weight:700;color:#64748b;display:block;margin-bottom:5px;">Email</label>
-                        <input type="email" name="email" placeholder="Email address" style="width:100%;padding:10px 14px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;">
+                        <label style="font-size:12px;font-weight:700;color:#64748b;display:block;margin-bottom:5px;">Date of Birth</label>
+                        <input type="date" name="dob" style="width:100%;padding:10px 14px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;">
                     </div>
                     <div>
+                        <label style="font-size:12px;font-weight:700;color:#64748b;display:block;margin-bottom:5px;">Date of Joining</label>
+                        <input type="date" name="doj" style="width:100%;padding:10px 14px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;">
+                    </div>
+                </div>
+
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
+                    <div>
                         <label style="font-size:12px;font-weight:700;color:#64748b;display:block;margin-bottom:5px;">Password *</label>
-                        <input type="password" name="password" id="passInput" placeholder="Set login password" required style="width:100%;padding:10px 14px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;">
+                        <input type="password" name="password" placeholder="Set login password" required style="width:100%;padding:10px 14px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;">
                     </div>
                     <div>
                         <label style="font-size:12px;font-weight:700;color:#64748b;display:block;margin-bottom:5px;">Photo</label>
@@ -235,7 +293,6 @@ $total_teachers = mysqli_num_rows($teachers_q);
                     </div>
                 </div>
 
-                <!-- MULTIPLE SUBJECTS -->
                 <div style="margin-bottom:14px;">
                     <label style="font-size:12px;font-weight:700;color:#64748b;display:block;margin-bottom:8px;">📚 Subjects *</label>
                     <div class="subject-tags" id="subjectTags"></div>
@@ -245,6 +302,10 @@ $total_teachers = mysqli_num_rows($teachers_q);
                     </div>
                     <div id="subjectsHidden"></div>
                     <div style="font-size:11px;color:#94a3b8;margin-top:6px;">💡 Enter press karo ya + Add button dabao</div>
+                </div>
+
+                <div style="background:#fef3c7;border-left:4px solid #f59e0b;padding:10px 14px;border-radius:8px;font-size:12px;color:#92400e;font-weight:700;margin-bottom:14px;">
+                    ℹ️ DOB aur DOJ mein 20 saal ka gap zaroori hai. Joining ke waqt teacher ki age kam se kam 20 saal honi chahiye.
                 </div>
 
                 <button type="submit" name="submit" style="background:#4f46e5;color:white;padding:11px 26px;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:700;">➕ Add Teacher</button>
@@ -284,7 +345,9 @@ $total_teachers = mysqli_num_rows($teachers_q);
                         <div class="teacher-card-info">📞 <?php echo htmlspecialchars($t['phone'] ?? 'N/A'); ?></div>
                         <div class="teacher-card-info">📧 <?php echo htmlspecialchars($t['email'] ?? 'N/A'); ?></div>
                         <div class="teacher-card-actions">
-                            <a href="admin_teacher_id_card.php?id=<?php echo $t['id']; ?>" style="flex:1;text-align:center;background:#4f46e5;color:white;padding:7px;border-radius:7px;text-decoration:none;font-size:12px;font-weight:700;">🪪 ID Card</a>
+                            <a href="admin_teacher_view.php?id=<?php echo $t['id']; ?>" style="flex:1;text-align:center;background:#10b981;color:white;padding:7px;border-radius:7px;text-decoration:none;font-size:12px;font-weight:700;">👁️ View</a>
+                            <a href="admin_teacher_edit.php?id=<?php echo $t['id']; ?>" style="flex:1;text-align:center;background:#4f46e5;color:white;padding:7px;border-radius:7px;text-decoration:none;font-size:12px;font-weight:700;">✏️ Edit</a>
+                            <a href="admin_teacher_id_card.php?id=<?php echo $t['id']; ?>" style="flex:1;text-align:center;background:#0ea5e9;color:white;padding:7px;border-radius:7px;text-decoration:none;font-size:12px;font-weight:700;">🪪 ID Card</a>
                             <a href="?delete=<?php echo $t['id']; ?>" onclick="return confirm('Delete <?php echo htmlspecialchars($t['name']); ?>?')" style="flex:1;text-align:center;background:#ef4444;color:white;padding:7px;border-radius:7px;text-decoration:none;font-size:12px;font-weight:700;">🗑️ Delete</a>
                         </div>
                     </div>

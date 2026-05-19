@@ -112,6 +112,7 @@ $unpaid_fee = $total_fee - $paid_fee;
             <a href="student_marksheet.php">📄 Marksheet</a>
             <a href="report_card.php">📊 Report Card</a>
             <a href="student_timetable.php">📅 Timetable</a>
+            <a href="notice_board_view.php">📢 Notice Board</a>
             <a href="student_profile.php" class="active">👤 My Profile</a>
             <a href="student_profile_edit.php">✏️ Edit Profile</a>
             <a href="student_change_password.php">🔐 Change Password</a>
@@ -196,6 +197,7 @@ $unpaid_fee = $total_fee - $paid_fee;
                 <a href="student_id_card.php" style="padding:10px 18px;background:#8b5cf6;color:white;border-radius:8px;text-decoration:none;font-size:13px;font-weight:700;">🪪 ID Card</a>
                 <a href="student_admit_card.php" style="padding:10px 18px;background:#4f46e5;color:white;border-radius:8px;text-decoration:none;font-size:13px;font-weight:700;">📋 Admit Card</a>
                 <a href="student_marksheet.php" style="padding:10px 18px;background:#10b981;color:white;border-radius:8px;text-decoration:none;font-size:13px;font-weight:700;">📄 Marksheet</a>
+                <a href="notice_board_view.php" style="padding:10px 18px;background:#f59e0b;color:white;border-radius:8px;text-decoration:none;font-size:13px;font-weight:700;">📢 Notice Board</a>
                 <a href="report_card.php" style="padding:10px 18px;background:#06b6d4;color:white;border-radius:8px;text-decoration:none;font-size:13px;font-weight:700;">📊 Report Card</a>
                 <a href="student_profile_edit.php" style="padding:10px 18px;background:#f59e0b;color:white;border-radius:8px;text-decoration:none;font-size:13px;font-weight:700;">✏️ Edit Profile</a>
             </div>

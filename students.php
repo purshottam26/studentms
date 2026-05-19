@@ -214,7 +214,31 @@ $input_style = "width:100%;padding:10px 14px;border:1px solid #e2e8f0;border-rad
                         <input type="email" name="email" placeholder="student@email.com" required>
 
                         <label>Course *</label>
-                        <input type="text" name="course" placeholder="e.g. B.Tech, BCA..." required>
+                        <input type="text" name="course" list="courseOptions" placeholder="e.g. B.Tech, BCA..." required>
+                        <datalist id="courseOptions">
+                            <option value="B.Tech (Computer Science)">
+                            <option value="B.Tech (Information Technology)">
+                            <option value="B.Tech (Software Engineering)">
+                            <option value="B.Sc (Computer Science)">
+                            <option value="BCA (Bachelor of Computer Applications)">
+                            <option value="Diploma in Computer Science">
+                            <option value="Diploma in IT">
+                            <option value="Certificate in Web Development">
+                            <option value="Certificate in Data Science">
+                            <option value="Certificate in Cloud Computing">
+                            <option value="Full Stack Development">
+                            <option value="DevOps Engineering">
+                            <option value="Data Science & Analytics">
+                            <option value="Cybersecurity Essentials">
+                            <option value="AI & Machine Learning">
+                            <?php foreach($course_names as $course): ?>
+                            <option value="<?php echo htmlspecialchars($course); ?>">
+                            <?php endforeach; ?>
+                        </datalist>
+
+                        <label>Student Password</label>
+                        <input type="password" name="password" placeholder="Student apna password yahan dale" autocomplete="new-password">
+                        <div style="font-size:12px;color:#64748b;margin-bottom:14px;">Agar password nahi diya to default Student ID use kiya jayega.</div>
 
                         <label>Date of Birth</label>
                         <input type="date" name="dob">

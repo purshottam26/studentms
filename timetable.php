@@ -7,6 +7,7 @@ if(!isset($_SESSION['admin'])){
 include 'db.php';
 
 $msg = '';
+$msg_type = 'success';
 
 // Add
 if(isset($_POST['add_tt'])){
@@ -18,9 +19,41 @@ if(isset($_POST['add_tt'])){
     $end_time = $_POST['end_time'];
     $room = mysqli_real_escape_string($conn, $_POST['room']);
 
-    mysqli_query($conn, "INSERT INTO timetable (course,day,subject,teacher_name,start_time,end_time,room)
-    VALUES ('$course','$day','$subject','$teacher_name','$start_time','$end_time','$room')");
-    $msg = "✅ Timetable entry added!";
+    if(empty($course) || empty($day) || empty($subject) || empty($start_time) || empty($end_time)){
+        $msg = '❌ Sabse pehle required fields bhar do.';
+        $msg_type = 'error';
+    } elseif($end_time <= $start_time){
+        $msg = '❌ End time start time se aage hona chahiye.';
+        $msg_type = 'error';
+    } else {
+        $conflict = false;
+        if(!empty($teacher_name)){
+            $stmt = mysqli_prepare($conn, "SELECT COUNT(*) FROM timetable WHERE teacher_name = ? AND day = ? AND start_time < ? AND end_time > ?");
+            mysqli_stmt_bind_param($stmt, 'ssss', $teacher_name, $day, $end_time, $start_time);
+            mysqli_stmt_execute($stmt);
+            mysqli_stmt_bind_result($stmt, $conflict_count);
+            mysqli_stmt_fetch($stmt);
+            mysqli_stmt_close($stmt);
+            if($conflict_count > 0){
+                $msg = '❌ Is teacher ke paas uss samay pehle se ek class hai. Alag time choose karo.';
+                $msg_type = 'error';
+                $conflict = true;
+            }
+        }
+
+        if(!$conflict){
+            $stmt = mysqli_prepare($conn, "INSERT INTO timetable (course,day,subject,teacher_name,start_time,end_time,room) VALUES (?,?,?,?,?,?,?)");
+            mysqli_stmt_bind_param($stmt, 'sssssss', $course, $day, $subject, $teacher_name, $start_time, $end_time, $room);
+            if(mysqli_stmt_execute($stmt)){
+                $msg = '✅ Timetable entry added!';
+                $msg_type = 'success';
+            } else {
+                $msg = '❌ Error while saving timetable entry.';
+                $msg_type = 'error';
+            }
+            mysqli_stmt_close($stmt);
+        }
+    }
 }
 
 // Delete

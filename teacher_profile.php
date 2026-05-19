@@ -6,6 +6,16 @@ if(!isset($_SESSION['teacher_id'])){
 }
 include 'db.php';
 
+// Ensure dob and doj columns exist
+$check_dob = mysqli_query($conn, "SHOW COLUMNS FROM teachers LIKE 'dob'");
+if(mysqli_num_rows($check_dob) == 0){
+    mysqli_query($conn, "ALTER TABLE teachers ADD COLUMN dob DATE NULL");
+}
+$check_doj = mysqli_query($conn, "SHOW COLUMNS FROM teachers LIKE 'doj'");
+if(mysqli_num_rows($check_doj) == 0){
+    mysqli_query($conn, "ALTER TABLE teachers ADD COLUMN doj DATE NULL");
+}
+
 $tid = $_SESSION['teacher_id'];
 $q = mysqli_query($conn, "SELECT * FROM teachers WHERE teacher_id='$tid'");
 $teacher = mysqli_fetch_assoc($q);
@@ -167,6 +177,7 @@ $subjects = explode(', ', $teacher['subject']);
             <div class="box-title">⚡ Quick Actions</div>
             <div style="display:flex;gap:10px;flex-wrap:wrap;">
                 <a href="teacher_id_card.php" style="padding:10px 18px;background:#4f46e5;color:white;border-radius:8px;text-decoration:none;font-size:13px;font-weight:700;">🪪 My ID Card</a>
+                <a href="teacher_profile_edit.php" style="padding:10px 18px;background:#2563eb;color:white;border-radius:8px;text-decoration:none;font-size:13px;font-weight:700;">✏️ Edit Profile</a>
                 <a href="library.php" style="padding:10px 18px;background:#10b981;color:white;border-radius:8px;text-decoration:none;font-size:13px;font-weight:700;">📚 Library</a>
                 <a href="teacher_change_password.php" style="padding:10px 18px;background:#f59e0b;color:white;border-radius:8px;text-decoration:none;font-size:13px;font-weight:700;">🔐 Change Password</a>
             </div>

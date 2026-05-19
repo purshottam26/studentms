@@ -60,6 +60,7 @@ $attendance_percent = $total_days > 0 ? round(($present_days / $total_days) * 10
             <a href="student_id_card.php">🪪 My ID Card</a>
             <a href="student_admit_card.php">📋 Admit Card</a>
             <a href="student_marksheet.php">📄 Marksheet</a>
+            <a href="notice_board_view.php">📢 Notice Board</a>
             <a href="student_profile.php">👤 My Profile</a>
             <a href="student_change_password.php">🔐 Change Password</a>
         </div>
@@ -112,6 +113,7 @@ $attendance_percent = $total_days > 0 ? round(($present_days / $total_days) * 10
                 <a href="student_id_card.php" style="padding:10px 20px;background:#8b5cf6;color:white;border-radius:8px;text-decoration:none;font-size:14px;font-weight:700;">🪪 My ID Card</a>
                 <a href="student_admit_card.php" style="padding:10px 20px;background:#4f46e5;color:white;border-radius:8px;text-decoration:none;font-size:14px;font-weight:700;">📋 Admit Card</a>
                 <a href="student_marksheet.php" style="padding:10px 20px;background:#10b981;color:white;border-radius:8px;text-decoration:none;font-size:14px;font-weight:700;">📄 Marksheet</a>
+                <a href="notice_board_view.php" style="padding:10px 20px;background:#f59e0b;color:white;border-radius:8px;text-decoration:none;font-size:14px;font-weight:700;">📢 Notice Board</a>
             </div>
         </div>
 
@@ -206,7 +208,7 @@ $attendance_percent = $total_days > 0 ? round(($present_days / $total_days) * 10
 
         <!-- NOTICES -->
         <?php
-        $notices = mysqli_query($conn, "SELECT * FROM notices ORDER BY created_at DESC LIMIT 3");
+        $notices = mysqli_query($conn, "SELECT * FROM notices ORDER BY id DESC LIMIT 3");
         if(mysqli_num_rows($notices) > 0):
         ?>
         <div class="box">
@@ -218,7 +220,7 @@ $attendance_percent = $total_days > 0 ? round(($present_days / $total_days) * 10
                     <?php echo htmlspecialchars($n['title']); ?>
                 </div>
                 <div style="font-size:13px;color:#64748b;"><?php echo htmlspecialchars($n['message']); ?></div>
-                <div style="font-size:11px;color:#94a3b8;margin-top:6px;">🕒 <?php echo date('d M Y', strtotime($n['created_at'])); ?></div>
+                <div style="font-size:11px;color:#94a3b8;margin-top:6px;">🕒 <?php echo !empty($n['created_at']) ? date('d M Y', strtotime($n['created_at'])) : 'N/A'; ?></div>
             </div>
             <?php endwhile; ?>
         </div>

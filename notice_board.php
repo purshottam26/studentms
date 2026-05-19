@@ -10,23 +10,39 @@ $msg = '';
 
 // Add Notice
 if(isset($_POST['add_notice'])){
-    $title = mysqli_real_escape_string($conn, $_POST['title']);
-    $message = mysqli_real_escape_string($conn, $_POST['message']);
-    $priority = mysqli_real_escape_string($conn, $_POST['priority']);
-    mysqli_query($conn, "INSERT INTO notices (title, message, priority, posted_by) VALUES ('$title','$message','$priority','Admin')");
-    $msg = "✅ Notice posted successfully!";
+    $title = trim($_POST['title'] ?? '');
+    $message = trim($_POST['message'] ?? '');
+    $priority = trim($_POST['priority'] ?? 'normal');
+    $allowed_priorities = ['normal', 'important', 'urgent'];
+    if(!in_array($priority, $allowed_priorities, true)){
+        $priority = 'normal';
+    }
+
+    if($title === '' || $message === ''){
+        $msg = "❌ Title and message are required.";
+    } else {
+        $stmt = mysqli_prepare($conn, "INSERT INTO notices (title, message, priority, posted_by) VALUES (?, ?, ?, ?)");
+        $posted_by = 'Admin';
+        mysqli_stmt_bind_param($stmt, 'ssss', $title, $message, $priority, $posted_by);
+        mysqli_stmt_execute($stmt);
+        mysqli_stmt_close($stmt);
+        $msg = "✅ Notice posted successfully!";
+    }
 }
 
 // Delete Notice
-if(isset($_GET['delete'])){
+if(isset($_GET['delete']) && ctype_digit($_GET['delete'])){
     $did = intval($_GET['delete']);
-    mysqli_query($conn, "DELETE FROM notices WHERE id=$did");
+    $stmt = mysqli_prepare($conn, "DELETE FROM notices WHERE id = ?");
+    mysqli_stmt_bind_param($stmt, 'i', $did);
+    mysqli_stmt_execute($stmt);
+    mysqli_stmt_close($stmt);
     header("Location: notice_board.php?msg=deleted");
     exit();
 }
 
-$del_msg = $_GET['msg'] ?? '';
-$notices_q = mysqli_query($conn, "SELECT * FROM notices ORDER BY created_at DESC");
+$del_msg = filter_input(INPUT_GET, 'msg', FILTER_SANITIZE_STRING) ?: '';
+$notices_q = mysqli_query($conn, "SELECT * FROM notices ORDER BY id DESC");
 $total_notices = mysqli_num_rows($notices_q);
 ?>
 <!DOCTYPE html>
@@ -63,7 +79,7 @@ $total_notices = mysqli_num_rows($notices_q);
 <body>
 <div class="main-container">
     <!-- SIDEBAR -->
-   <?php include_once('sidebar.php'); ?>>
+   <?php include_once('sidebar.php'); ?>
 
     <div class="content">
         <div class="topbar">
@@ -125,7 +141,7 @@ $total_notices = mysqli_num_rows($notices_q);
                 <div class="notice-msg"><?php echo nl2br(htmlspecialchars($n['message'])); ?></div>
                 <div class="notice-meta">
                     <span>👤 <?php echo $n['posted_by']; ?></span>
-                    <span>🕒 <?php echo date('d M Y, h:i A', strtotime($n['created_at'])); ?></span>
+                    <span>🕒 <?php echo !empty($n['created_at']) ? date('d M Y, h:i A', strtotime($n['created_at'])) : 'N/A'; ?></span>
                     <a href="?delete=<?php echo $n['id']; ?>" onclick="return confirm('Delete this notice?')" style="margin-left:auto;background:#ef4444;color:white;padding:4px 12px;border-radius:6px;text-decoration:none;font-size:12px;font-weight:700;">🗑️ Delete</a>
                 </div>
             </div>
